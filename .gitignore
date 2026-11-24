@@ -1,0 +1,5 @@
+node_modules
+dist
+*.tsbuildinfo
+# GLB original do Sketchfab (6,8 MB): fica fora do repositório; o otimizado vai em public/models
+models-src/
