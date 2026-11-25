@@ -10,4 +10,6 @@ export interface GlassesParts {
   /** Uma malha da armação e a malha da lente, para calibrar os padrões do shader. */
   frameMesh: THREE.Mesh | null;
   lensMesh: THREE.Mesh | null;
+  /** Eixo da dobradiça direita (x > 0) no espaço do óculos; a esquerda é o espelho em x. */
+  hinge: THREE.Vector3;
 }

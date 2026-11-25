@@ -111,7 +111,7 @@ export function PlaceholderGlasses({ materials, partsRef }: { materials: Materia
     const byName = (n: string) => root.getObjectByName(n) as THREE.Group;
     const lensMesh = byName('lenses').children[0] as THREE.Mesh;
     const frameMesh = byName('front').children[0] as THREE.Mesh;
-    partsRef({ root, front: byName('front'), lenses: byName('lenses'), templeL: byName('templeL'), templeR: byName('templeR'), frameMesh, lensMesh });
+    partsRef({ root, front: byName('front'), lenses: byName('lenses'), templeL: byName('templeL'), templeR: byName('templeR'), frameMesh, lensMesh, hinge: new THREE.Vector3(LENS_X + LENS_W / 2 + RIM, 0.1, -0.08) });
   }, [partsRef]);
 
   return (

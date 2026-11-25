@@ -74,8 +74,10 @@ function build(scene: THREE.Group, m: Materials) {
   let lensMesh: THREE.Mesh | null = null;
   const unknown: string[] = [];
 
+  let currentName = '';
   const add = (group: THREE.Object3D, geometry: THREE.BufferGeometry, material: THREE.Material, matrix: THREE.Matrix4, shadow = true) => {
     const mesh = new THREE.Mesh(geometry, material);
+    mesh.name = currentName;
     mesh.matrixAutoUpdate = false;
     mesh.matrix.copy(matrix);
     mesh.castShadow = shadow;
@@ -87,6 +89,7 @@ function build(scene: THREE.Group, m: Materials) {
     const src = o as THREE.Mesh;
     if (!src.isMesh) return;
     const role = ROLES[src.name];
+    currentName = src.name;
     if (!role) unknown.push(src.name);
     const matrix = src.matrixWorld.clone();
     switch (role ?? 'front') {
@@ -118,11 +121,17 @@ function build(scene: THREE.Group, m: Materials) {
   const size = box.getSize(new THREE.Vector3());
   const center = box.getCenter(new THREE.Vector3());
   const s = 1.4 / size.x;
-  inner.scale.setScalar(s);
-  inner.position.copy(center).multiplyScalar(-s);
+  // a normalização vai para a matriz de cada malha: assim os grupos (frente, lentes,
+  // hastes) ficam no espaço do óculos normalizado e os deslocamentos são em "decímetros"
+  const norm = new THREE.Matrix4()
+    .makeTranslation(-center.x * s, -center.y * s, -center.z * s)
+    .multiply(new THREE.Matrix4().makeScale(s, s, s));
+  inner.traverse((o) => (o as THREE.Mesh).isMesh && o.matrix.premultiply(norm));
   root.updateMatrixWorld(true);
 
-  const parts: GlassesParts = { root, front, lenses, templeL, templeR, frameMesh, lensMesh };
+  // medido no óculos normalizado (malha das dobradiças, Object_11)
+  const hinge = new THREE.Vector3(0.64, 0.03, 0.57);
+  const parts: GlassesParts = { root, front, lenses, templeL, templeR, frameMesh, lensMesh, hinge };
   return parts;
 }
 

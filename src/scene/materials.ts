@@ -40,6 +40,14 @@ export interface LensUniforms {
   uYMin: { value: number };
   uYMax: { value: number };
   uLite: { value: number };
+  /** Curvatura simulada: inclina a normal a partir do centro de cada lente (lente convexa). */
+  uBulge: { value: number };
+  uRight: { value: THREE.Vector3 };
+  uMid: { value: number };
+  uCL: { value: THREE.Vector3 };
+  uCR: { value: THREE.Vector3 };
+  /** Raio da lente em unidades de mundo (a normal é inclinada no espaço de visão). */
+  uRadius: { value: number };
 }
 
 export interface Materials {
@@ -98,13 +106,19 @@ export function createMaterials(lite: boolean): Materials {
     uYMin: { value: -0.2 },
     uYMax: { value: 0.2 },
     uLite: { value: lite ? 1 : 0 },
+    uBulge: { value: 0.9 },
+    uRight: { value: new THREE.Vector3(1, 0, 0) },
+    uMid: { value: 0 },
+    uCL: { value: new THREE.Vector3(-0.3, 0, 0) },
+    uCR: { value: new THREE.Vector3(0.3, 0, 0) },
+    uRadius: { value: 0.23 },
   };
   const lens = new THREE.MeshPhysicalMaterial({
     color: '#ffffff',
     roughness: 0.02,
     metalness: 0,
     ior: 1.52,
-    thickness: 0.025,
+    thickness: 0.35,
     transmission: lite ? 0 : 1,
     transparent: lite,
     opacity: lite ? 0.16 : 1,
@@ -120,10 +134,33 @@ export function createMaterials(lite: boolean): Materials {
   lens.onBeforeCompile = (s) => {
     Object.assign(s.uniforms, lensU);
     injectObjPos(s);
-    s.fragmentShader = s.fragmentShader
+    // deslocamento (no espaço de visão) do ponto até o centro da sua lente: linear na
+    // posição, então interpola certo mesmo com vértices só na borda
+    s.vertexShader = s.vertexShader
       .replace(
         '#include <common>',
-        `#include <common>\nuniform float uGrad; uniform vec3 uGradColor; uniform vec3 uUp; uniform float uYMin; uniform float uYMax; uniform float uLite;\nvarying vec3 vObjPos;`,
+        /* glsl */ `#include <common>
+        uniform vec3 uRight; uniform float uMid; uniform vec3 uCL; uniform vec3 uCR;
+        varying vec3 vLensOff;`,
+      )
+      .replace(
+        '#include <begin_vertex>',
+        /* glsl */ `#include <begin_vertex>
+        vec3 lc = dot(position, uRight) < uMid ? uCL : uCR;
+        vLensOff = mat3(modelViewMatrix) * (position - lc);`,
+      );
+    s.fragmentShader = s.fragmentShader
+      .replace(
+        '#include <normal_fragment_begin>',
+        /* glsl */ `#include <normal_fragment_begin>
+        normal = normalize(normal + vLensOff / uRadius * uBulge * (gl_FrontFacing ? 1.0 : -1.0));`,
+      )
+      .replace(
+        '#include <common>',
+        /* glsl */ `#include <common>
+        uniform float uGrad; uniform vec3 uGradColor; uniform vec3 uUp; uniform float uYMin; uniform float uYMax;
+        uniform float uLite; uniform float uBulge; uniform float uRadius;
+        varying vec3 vObjPos; varying vec3 vLensOff;`,
       )
       .replace(
         '#include <color_fragment>',
@@ -201,7 +238,13 @@ export function applyLens(m: Materials, l: LensTint, instant = false) {
  * Ajusta os uniforms que dependem da geometria: escala do padrão de tartaruga e
  * o eixo "para cima" do degradê, ambos medidos no espaço do óculos normalizado.
  */
-export function calibrate(m: Materials, root: THREE.Object3D, frameMesh: THREE.Mesh | null, lensMesh: THREE.Mesh | null) {
+export function calibrate(
+  m: Materials,
+  root: THREE.Object3D,
+  frameMesh: THREE.Mesh | null,
+  lensMesh: THREE.Mesh | null,
+  lensGroup?: THREE.Object3D,
+) {
   root.updateWorldMatrix(true, true);
   const rootInv = root.matrixWorld.clone().invert();
   if (frameMesh) {
@@ -225,5 +268,42 @@ export function calibrate(m: Materials, root: THREE.Object3D, frameMesh: THREE.M
     m.lensU.uUp.value.copy(up);
     m.lensU.uYMin.value = min;
     m.lensU.uYMax.value = max;
+
+    // centro de cada lente (as malhas de lente compartilham o mesmo espaço local)
+    const right = new THREE.Vector3(1, 0, 0).transformDirection(toLocal);
+    const pts: THREE.Vector3[] = [];
+    (lensGroup ?? lensMesh).traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      const p = mesh.geometry.attributes.position as THREE.BufferAttribute;
+      for (let i = 0; i < p.count; i++) pts.push(new THREE.Vector3().fromBufferAttribute(p, i));
+    });
+    let rmin = Infinity;
+    let rmax = -Infinity;
+    for (const p of pts) {
+      const d = p.dot(right);
+      rmin = Math.min(rmin, d);
+      rmax = Math.max(rmax, d);
+    }
+    const mid = (rmin + rmax) / 2;
+    const cl = new THREE.Vector3();
+    const cr = new THREE.Vector3();
+    let nl = 0;
+    let nr = 0;
+    for (const p of pts) {
+      if (p.dot(right) < mid) {
+        cl.add(p);
+        nl++;
+      } else {
+        cr.add(p);
+        nr++;
+      }
+    }
+    m.lensU.uRight.value.copy(right);
+    m.lensU.uMid.value = mid;
+    m.lensU.uCL.value.copy(cl.divideScalar(Math.max(nl, 1)));
+    m.lensU.uCR.value.copy(cr.divideScalar(Math.max(nr, 1)));
+    // raio de uma lente em unidades de mundo: 1/4 da largura das duas, levado para o mundo
+    m.lensU.uRadius.value = ((rmax - rmin) / 4) * rel.getMaxScaleOnAxis();
   }
 }
