@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react';
 import { BRAND } from '../brand';
 import { FRAMES, LENSES, frameById, lensById, type FrameId, type LensId } from '../options';
 import { store, useStore } from '../store';
+import { useReveal } from './useReveal';
 
 interface Option {
   id: string;
@@ -53,14 +53,7 @@ function Choice({
 export function Configurator() {
   const frame = useStore((s) => s.frame);
   const lens = useStore((s) => s.lens);
-  const panel = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = panel.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => e.isIntersecting && el.classList.add('is-in'), { threshold: 0.35 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
+  const panel = useReveal<HTMLDivElement>();
   const f = frameById(frame);
   const l = lensById(lens);
 
@@ -73,7 +66,9 @@ export function Configurator() {
   return (
     <section id="configurador" className="config" data-scene="configurador" aria-labelledby="config-title">
       <div className="config__panel reveal" ref={panel}>
-        <p className="eyebrow">Configurador</p>
+        <p className="eyebrow">
+          <span className="chapter__num">05</span> Configurador
+        </p>
         <h2 id="config-title" className="config__title">
           Monte o <em>seu</em>.
         </h2>

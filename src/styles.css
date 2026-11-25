@@ -518,3 +518,108 @@ a {
     margin-bottom: 1rem;
   }
 }
+
+/* ---------- 2 a 4. capítulos ---------- */
+.chapter {
+  position: relative;
+  height: 175svh;
+}
+.chapter__sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  display: flex;
+  align-items: center;
+  padding: 96px var(--pad);
+  pointer-events: none;
+}
+.chapter--right .chapter__sticky {
+  justify-content: flex-end;
+}
+.chapter__copy {
+  width: min(420px, 34vw);
+  pointer-events: auto;
+}
+.chapter__num {
+  font-family: var(--serif);
+  font-size: 0.95rem;
+  letter-spacing: 0;
+  margin-right: 0.6em;
+  color: var(--tort);
+}
+.chapter__title {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(2.8rem, 5vw, 5rem);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+}
+.chapter__title em {
+  color: var(--tort);
+}
+.chapter__text {
+  margin: 1.4rem 0 2rem;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 36ch;
+}
+.chapter__specs {
+  margin: 0;
+}
+.chapter__specs > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--line);
+  font-size: 0.85rem;
+}
+.chapter__specs > div:last-child {
+  border-bottom: 1px solid var(--line);
+}
+.chapter__specs dt {
+  color: var(--muted);
+}
+.chapter__specs dd {
+  margin: 0;
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .chapter__sticky {
+    align-items: flex-end;
+    padding: 0 var(--pad) 36px;
+  }
+  .chapter__copy {
+    width: 100%;
+  }
+  .chapter__title {
+    font-size: 2.6rem;
+  }
+  .chapter__text {
+    margin: 0.9rem 0 1.2rem;
+    font-size: 0.95rem;
+  }
+  .chapter__specs > div {
+    padding: 0.55rem 0;
+    font-size: 0.8rem;
+  }
+}
+
+/* 3. lentes: a haste passa atrás do texto; um véu da cor do fundo garante a leitura */
+.chapter--lentes .chapter__copy {
+  background: rgba(238, 235, 230, 0.9);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  padding: 32px 36px 36px;
+  margin-left: -36px;
+}
+@media (max-width: 768px) {
+  .chapter--lentes .chapter__copy {
+    padding: 20px var(--pad) 0;
+    margin: 0 calc(-1 * var(--pad)) -36px;
+    padding-bottom: 36px;
+    width: calc(100% + 2 * var(--pad));
+  }
+}

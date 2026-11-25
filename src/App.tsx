@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { lockScroll, ScrollTrigger, startSmoothScroll } from './motion';
 import { frameById, lensById } from './options';
 import { useStore } from './store';
+import { Chapters } from './ui/Chapter';
 import { Configurator } from './ui/Configurator';
 import { Footer } from './ui/Footer';
 import { Hero } from './ui/Hero';
@@ -36,6 +37,7 @@ export default function App() {
 
       <main className="page">
         <Hero />
+        <Chapters />
         <Configurator />
       </main>
       <Footer />
