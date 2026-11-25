@@ -12,6 +12,7 @@ import { BlobShadow } from './BlobShadow';
 import type { GlassesParts } from './parts';
 import { PlaceholderGlasses } from './PlaceholderGlasses';
 import { RealGlasses } from './RealGlasses';
+import { EyeChart } from './EyeChart';
 import { FLOAT_Y } from './keyframes';
 import { rig, setupRig } from './rig';
 
@@ -61,6 +62,20 @@ function useMaterialSync(m: Materials) {
   }, [m]);
 }
 
+/** Gira a haste em torno do eixo da dobradiça (side = 1 direita, -1 esquerda) e depois desloca. */
+const _pivot = new THREE.Vector3();
+const _q = new THREE.Quaternion();
+const _up = new THREE.Vector3(0, 1, 0);
+function placeTemple(t: THREE.Object3D, hinge: THREE.Vector3, side: 1 | -1, angle: number, dx: number, dz: number) {
+  _pivot.set(hinge.x * side, hinge.y, hinge.z);
+  _q.setFromAxisAngle(_up, angle);
+  t.quaternion.copy(_q);
+  // posição = pivô - R·pivô (gira em volta do pivô) + deslocamento
+  t.position.copy(_pivot).sub(_pivot.clone().applyQuaternion(_q));
+  t.position.x += dx;
+  t.position.z += dz;
+}
+
 function Glasses({ materials }: { materials: Materials }) {
   const holder = useRef<THREE.Group>(null);
   const spinner = useRef<THREE.Group>(null);
@@ -75,7 +90,7 @@ function Glasses({ materials }: { materials: Materials }) {
     (p: GlassesParts) => {
       if (parts.current === p) return;
       parts.current = p;
-      calibrate(materials, p.root, p.frameMesh, p.lensMesh);
+      calibrate(materials, p.root, p.frameMesh, p.lensMesh, p.lenses);
       const copy = p.root.clone(true);
       const a: THREE.Object3D[] = [];
       const b: THREE.Object3D[] = [];
@@ -99,7 +114,9 @@ function Glasses({ materials }: { materials: Materials }) {
 
     // giro: livre na abertura, assentando no ângulo da parada nas outras cenas
     const nearest = rig.rotY + TAU * Math.round((angle.current - rig.rotY) / TAU);
-    if (reducedMotion) {
+    // só em desenvolvimento: window.__snap = true pula direto para o ângulo final (testes com a aba oculta)
+    const snap = import.meta.env.DEV && (window as unknown as { __snap?: boolean }).__snap;
+    if (reducedMotion || snap) {
       angle.current = rig.spin > 0.5 ? 0.35 : nearest;
     } else {
       angle.current += dt * 0.32 * rig.spin;
@@ -111,10 +128,26 @@ function Glasses({ materials }: { materials: Materials }) {
     // flutuação e um leve acompanhamento do mouse (só no computador)
     const t = state.clock.elapsedTime;
     h.position.y = FLOAT_Y + (reducedMotion ? 0 : Math.sin(t * 0.9) * 0.025);
-    const px = isLite || reducedMotion ? 0 : state.pointer.x;
-    const py = isLite || reducedMotion ? 0 : state.pointer.y;
+    // nos closes (fit pequeno) o mouse quase não mexe, senão a dobradiça sai do quadro
+    const follow = isLite || reducedMotion ? 0 : THREE.MathUtils.clamp(rig.fit / 2.2, 0.15, 1);
+    const px = state.pointer.x * follow;
+    const py = state.pointer.y * follow;
     h.rotation.x = THREE.MathUtils.damp(h.rotation.x, -0.04 - py * 0.06, 3, dt);
     h.rotation.z = THREE.MathUtils.damp(h.rotation.z, -px * 0.04, 3, dt);
+
+    // 4. leveza: as lentes saem para a frente primeiro, depois as hastes para trás e para fora
+    const p = parts.current;
+    if (p) {
+      const e = rig.explode;
+      const a = THREE.MathUtils.smoothstep(e, 0, 0.65);
+      const b = THREE.MathUtils.smoothstep(e, 0.3, 1);
+      p.lenses.position.set(0, 0.04 * a, 0.5 * a);
+      p.front.position.set(0, 0.02 * a, 0.14 * a);
+      // 3. lentes: as hastes abrem na dobradiça de mola (e saem do caminho da câmera)
+      const f = THREE.MathUtils.smoothstep(rig.flex, 0, 1) * 0.35;
+      placeTemple(p.templeR, p.hinge, 1, -(f + 0.14 * b), 0.12 * b, -0.3 * b);
+      placeTemple(p.templeL, p.hinge, -1, f + 0.14 * b, -0.12 * b, -0.3 * b);
+    }
 
     if (mirror && mirrorInner.current) {
       s.updateWorldMatrix(true, false);
@@ -201,6 +234,9 @@ function Scene() {
       <Studio />
       <CameraRig />
       <Suspense fallback={null}>
+        <EyeChart />
+      </Suspense>
+      <Suspense fallback={null}>
         <Glasses materials={materials} />
         <ReadySignal />
       </Suspense>
@@ -223,8 +259,8 @@ export default function Experience() {
       dpr={isLite ? [1, 1.5] : [1, 2]}
       gl={{ antialias: isLite, powerPreference: 'high-performance', alpha: false }}
       camera={{ fov: 30, near: 0.05, far: 40, position: [0, 0.78, 3.7] }}
-      onCreated={({ gl, scene }) => {
-        if (import.meta.env.DEV) Object.assign(window, { __scene: scene, __gl: gl });
+      onCreated={({ gl, scene, camera }) => {
+        if (import.meta.env.DEV) Object.assign(window, { __scene: scene, __gl: gl, __camera: camera });
         // no computador o tone mapping é feito no pós-processamento
         gl.toneMapping = isLite ? THREE.NeutralToneMapping : THREE.NoToneMapping;
       }}

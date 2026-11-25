@@ -13,13 +13,13 @@ gsap.registerPlugin(ScrollTrigger);
 export const rig = {
   px: 0, py: 0.78, pz: 3.7,
   tx: 0, ty: 0.46, tz: 0,
-  fit: 2.2, sx: 0, sy: 0, spin: 1, rotY: 0, explode: 0,
+  fit: 2.2, sx: 0, sy: 0, spin: 1, rotY: 0, explode: 0, chart: 0, flex: 0,
 };
 
 const flat = (k: Keyframe) => ({
   px: k.pos[0], py: k.pos[1], pz: k.pos[2],
   tx: k.target[0], ty: k.target[1], tz: k.target[2],
-  fit: k.fit, sx: k.screen[0], sy: k.screen[1], spin: k.spin, rotY: k.rotY, explode: k.explode,
+  fit: k.fit, sx: k.screen[0], sy: k.screen[1], spin: k.spin, rotY: k.rotY, explode: k.explode, chart: k.chart, flex: k.flex,
 });
 
 const isNarrow = () => window.innerWidth < 769;
