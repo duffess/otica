@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { lockScroll, ScrollTrigger, startSmoothScroll } from './motion';
+import { lockScroll, ScrollTrigger, startSceneSnap, startSmoothScroll } from './motion';
 import { frameById, lensById } from './options';
 import { useStore } from './store';
 import { Chapters } from './ui/Chapter';
@@ -7,6 +7,7 @@ import { Configurator } from './ui/Configurator';
 import { Footer } from './ui/Footer';
 import { Hero } from './ui/Hero';
 import { Loader } from './ui/Loader';
+import { SceneIndex } from './ui/SceneIndex';
 import { Service } from './ui/Service';
 
 // three/fiber/drei chegam num pedaço separado, depois da tela de abertura
@@ -18,6 +19,7 @@ export default function App() {
   const lens = useStore((s) => s.lens);
 
   useEffect(() => startSmoothScroll(), []);
+  useEffect(() => startSceneSnap(), []);
 
   useEffect(() => {
     lockScroll(!ready);
@@ -46,6 +48,7 @@ export default function App() {
         <Service />
       </main>
       <Footer />
+      <SceneIndex />
       <Loader />
     </>
   );
