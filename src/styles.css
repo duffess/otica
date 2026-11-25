@@ -345,11 +345,21 @@ a {
 .footer {
   position: relative;
   z-index: 1;
-  background: var(--ink);
+  /* sem fundo: o grafite vem da cena 3D, que escurece aqui */
   color: var(--stone);
   padding: clamp(64px, 12svh, 120px) var(--pad) 40px;
   display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 40px;
+}
+.footer__text {
+  display: grid;
   gap: 18px;
+}
+.footer__stage {
+  min-height: clamp(260px, 38svh, 440px);
+  pointer-events: none;
 }
 .footer__brand {
   margin: 0 0 24px;
@@ -627,6 +637,8 @@ a {
 /* ---------- 6. serviço ---------- */
 .service {
   position: relative;
+  /* fundo sólido: o óculos passa por trás, a caminho do rodapé */
+  background: var(--stone);
   min-height: 100svh;
   display: flex;
   align-items: flex-end;
@@ -710,8 +722,16 @@ a {
 
 @media (max-width: 768px) {
   .service {
-    /* o óculos gira no terço de cima; o conteúdo vem por cima de um fundo pedra */
-    padding: 38svh 0 0;
+    padding: 72px 0 0;
+  }
+  .footer {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding-top: 24px;
+  }
+  .footer__stage {
+    order: -1;
+    min-height: 34svh;
   }
   .service__inner {
     background: var(--stone);
@@ -757,4 +777,12 @@ a {
 }
 .reduce-motion .reveal {
   transform: none;
+}
+
+.topbar {
+  transition: transform 0.6s var(--ease), opacity 0.6s var(--ease);
+}
+.topbar.is-hidden {
+  transform: translateY(-100%);
+  opacity: 0;
 }

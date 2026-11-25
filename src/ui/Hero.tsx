@@ -21,6 +21,27 @@ export function Hero() {
     };
   }, []);
 
+  // o topo fixo some ao descer (não cobre os textos) e volta ao subir
+  useEffect(() => {
+    const bar = document.querySelector<HTMLElement>('.topbar');
+    if (!bar) return;
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      const hide = y > window.innerHeight * 0.5 && y > last;
+      bar.classList.toggle('is-hidden', hide);
+      last = y;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    // com o foco do teclado dentro dele, sempre aparece
+    const onFocus = () => bar.classList.remove('is-hidden');
+    bar.addEventListener('focusin', onFocus);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      bar.removeEventListener('focusin', onFocus);
+    };
+  }, []);
+
   return (
     <section className="hero" data-scene="abertura" aria-labelledby="hero-title">
       <header className="topbar">

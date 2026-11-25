@@ -17,11 +17,28 @@ import { rig, setupRig } from './rig';
 const Effects = lazy(() => import('./Effects'));
 
 const BG = '#EEEBE6';
+const STONE = new THREE.Color(BG);
+const INK = new THREE.Color('#1A1A1A');
+const floorMat: { current: THREE.MeshBasicMaterial | null } = { current: null };
+
+/** Rodapé: fundo, névoa e chão vão da pedra ao grafite conforme rig.dark. */
+function SceneTone() {
+  const scene = useThree((s) => s.scene);
+  const c = useMemo(() => new THREE.Color(), []);
+  useFrame(() => {
+    c.lerpColors(STONE, INK, rig.dark);
+    if (scene.background instanceof THREE.Color) scene.background.copy(c);
+    if (scene.fog) (scene.fog as THREE.Fog).color.copy(c);
+    floorMat.current?.color.copy(c);
+  });
+  return null;
+}
 const TAU = Math.PI * 2;
 
 /** Câmera segue o "rig" da rolagem. Em telas estreitas recua até a largura `fit` caber. */
 function CameraRig() {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
+  const scene = useThree((s) => s.scene);
   const pos = useMemo(() => new THREE.Vector3(), []);
   const target = useMemo(() => new THREE.Vector3(), []);
   const dir = useMemo(() => new THREE.Vector3(), []);
@@ -35,6 +52,11 @@ function CameraRig() {
     const hfov = 2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * camera.aspect);
     const need = rig.fit / 2 / Math.tan(hfov / 2);
     const dist = Math.max(len, need);
+    // a névoa só apaga o chão ao longe: começa sempre depois do óculos, seja qual for a distância
+    if (scene.fog instanceof THREE.Fog) {
+      scene.fog.near = dist + 2;
+      scene.fog.far = dist + 10;
+    }
     pos.copy(target).addScaledVector(dir.normalize(), dist);
     camera.position.copy(pos);
     camera.lookAt(target);
@@ -219,7 +241,7 @@ function Floor() {
   return (
     <mesh rotation-x={-Math.PI / 2} renderOrder={-1}>
       <planeGeometry args={[60, 60]} />
-      <meshBasicMaterial color={BG} transparent opacity={isLite ? 0.9 : 0.87} depthWrite={false} fog={false} toneMapped={false} />
+      <meshBasicMaterial ref={(m) => void (floorMat.current = m)} color={BG} transparent opacity={isLite ? 0.9 : 0.87} depthWrite={false} fog={false} toneMapped={false} />
     </mesh>
   );
 }
@@ -247,6 +269,7 @@ function Scene() {
       <fog attach="fog" args={[BG, 5, 13]} />
       <Studio />
       <CameraRig />
+      <SceneTone />
       <Suspense fallback={null}>
         <EyeChart />
       </Suspense>

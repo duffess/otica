@@ -17,6 +17,8 @@ export interface Keyframe {
   chart: number;
   /** 0 a 1: hastes abrem para fora na dobradiça de mola. */
   flex: number;
+  /** 0 a 1: fundo, névoa e chão vão da pedra ao grafite (rodapé). */
+  dark: number;
 }
 
 type V3 = [number, number, number];
@@ -42,7 +44,7 @@ const add = (a: V3, b: V3): V3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 /** Tabela de exame: fica à frente do óculos, onde o rosto "olha". */
 export const CHART_POS: V3 = [LENS_R[0], O + 0.02, 2.6];
 
-const base = { spin: 0, explode: 0, chart: 0, flex: 0 };
+const base = { spin: 0, explode: 0, chart: 0, flex: 0, dark: 0 };
 
 // 2. armação: perto da dobradiça direita, girada para a câmera
 const ROT_HINGE = -0.55;
@@ -58,10 +60,10 @@ const desktop: KF = {
   lentes: { ...base, pos: add(lens, [0.05, 0.24, -0.92]), target: lens, fit: 0.2, screen: [0.2, 0], rotY: 0, chart: 1, flex: 1 },
   leveza: { ...base, pos: [-1.35, O + 0.95, 2.5], target: [0, O, 0.05], fit: 3.8, screen: [0.2, 0.03], rotY: ROT_LIGHT, explode: 1 },
   configurador: { ...base, pos: [-0.3, O + 0.22, 3.1], target: [0, O, 0], fit: 4.4, screen: [-0.21, 0.03], rotY: -0.42 },
-  // 6. serviço: de volta ao giro lento da abertura, pequeno no canto de cima
-  servico: { ...base, pos: [0, O + 0.55, 3.6], target: [0, O, 0], fit: 6.2, screen: [0.27, 0.2], spin: 1, rotY: 0 },
+  // 6. serviço e rodapé: fit e screen são medidos no rodapé em rig.ts (footerFrames)
+  servico: { ...base, pos: [0, O + 0.1, 1.2], target: [0, O, 0], fit: 4, screen: [0.25, -1.2], spin: 1, rotY: 0 },
+  rodape: { ...base, pos: [0, O + 0.1, 1.2], target: [0, O, 0], fit: 4, screen: [0.25, -0.2], spin: 1, rotY: 0, dark: 1 },
 };
-desktop.rodape = desktop.servico;
 
 const mobile: KF = {
   abertura: { ...base, pos: [0, O + 0.34, 4.2], target: [0, O, 0], fit: 1.9, screen: [0, 0.1], spin: 1, rotY: 0 },
@@ -71,9 +73,9 @@ const mobile: KF = {
   leveza: { ...base, pos: [-1.8, O + 1.45, 3.8], target: [-0.12, O, 0.05], fit: 2.5, screen: [0, 0.22], rotY: ROT_LIGHT, explode: 1 },
   // óculos no terço de cima da tela, painel embaixo
   configurador: { ...base, pos: [-0.2, O + 0.3, 3.6], target: [0, O, 0], fit: 2.0, screen: [0, 0.26], rotY: -0.42 },
-  servico: { ...base, pos: [0, O + 0.5, 4.2], target: [0, O, 0], fit: 2.6, screen: [0, 0.33], spin: 1, rotY: 0 },
+  servico: { ...base, pos: [0, O + 0.1, 1.2], target: [0, O, 0], fit: 2, screen: [0, -1.2], spin: 1, rotY: 0 },
+  rodape: { ...base, pos: [0, O + 0.1, 1.2], target: [0, O, 0], fit: 2, screen: [0, -0.2], spin: 1, rotY: 0, dark: 1 },
 };
-mobile.rodape = mobile.servico;
 
 export const FLOAT_Y = O;
 export const getKeyframes = (narrow: boolean) => (narrow ? mobile : desktop);
