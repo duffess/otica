@@ -48,6 +48,10 @@ export interface LensUniforms {
   uCR: { value: THREE.Vector3 };
   /** Raio da lente em unidades de mundo (a normal é inclinada no espaço de visão). */
   uRadius: { value: number };
+  /** 0 a 1: lente espelhada. O espelho fica só na face de fora; por trás a lente deixa ver. */
+  uMirror: { value: number };
+  /** Direção "para a frente" do óculos (para fora do rosto), no espaço local da lente. */
+  uFwd: { value: THREE.Vector3 };
 }
 
 export interface Materials {
@@ -112,6 +116,8 @@ export function createMaterials(lite: boolean): Materials {
     uCL: { value: new THREE.Vector3(-0.3, 0, 0) },
     uCR: { value: new THREE.Vector3(0.3, 0, 0) },
     uRadius: { value: 0.23 },
+    uMirror: { value: 0 },
+    uFwd: { value: new THREE.Vector3(0, 0, 1) },
   };
   const lens = new THREE.MeshPhysicalMaterial({
     color: '#ffffff',
@@ -140,14 +146,15 @@ export function createMaterials(lite: boolean): Materials {
       .replace(
         '#include <common>',
         /* glsl */ `#include <common>
-        uniform vec3 uRight; uniform float uMid; uniform vec3 uCL; uniform vec3 uCR;
-        varying vec3 vLensOff;`,
+        uniform vec3 uRight; uniform float uMid; uniform vec3 uCL; uniform vec3 uCR; uniform vec3 uFwd;
+        varying vec3 vLensOff; varying vec3 vFwdView;`,
       )
       .replace(
         '#include <begin_vertex>',
         /* glsl */ `#include <begin_vertex>
         vec3 lc = dot(position, uRight) < uMid ? uCL : uCR;
-        vLensOff = mat3(modelViewMatrix) * (position - lc);`,
+        vLensOff = mat3(modelViewMatrix) * (position - lc);
+        vFwdView = mat3(modelViewMatrix) * uFwd;`,
       );
     s.fragmentShader = s.fragmentShader
       .replace(
@@ -159,8 +166,8 @@ export function createMaterials(lite: boolean): Materials {
         '#include <common>',
         /* glsl */ `#include <common>
         uniform float uGrad; uniform vec3 uGradColor; uniform vec3 uUp; uniform float uYMin; uniform float uYMax;
-        uniform float uLite; uniform float uBulge; uniform float uRadius;
-        varying vec3 vObjPos; varying vec3 vLensOff;`,
+        uniform float uLite; uniform float uBulge; uniform float uRadius; uniform float uMirror;
+        varying vec3 vObjPos; varying vec3 vLensOff; varying vec3 vFwdView;`,
       )
       .replace(
         '#include <color_fragment>',
@@ -168,7 +175,30 @@ export function createMaterials(lite: boolean): Materials {
         float gy = clamp((dot(vObjPos, uUp) - uYMin) / max(uYMax - uYMin, 1e-4), 0.0, 1.0);
         float g = smoothstep(0.1, 0.95, gy);
         diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(1.0), uGradColor, g), uGrad);
-        diffuseColor.a = mix(diffuseColor.a, mix(0.1, 0.86, g), uGrad * uLite);`,
+        diffuseColor.a = mix(diffuseColor.a, mix(0.1, 0.86, g), uGrad * uLite);
+        // espelhada vista por trás: o espelho é só a camada de fora; daqui ela é uma lente fumê
+        float lensBehind = uMirror * smoothstep(0.12, -0.12, dot(normalize(vFwdView), normalize(vViewPosition)));
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.34), lensBehind);
+        diffuseColor.a = mix(diffuseColor.a, 0.38, lensBehind * uLite);`,
+      )
+      .replace(
+        '#include <metalnessmap_fragment>',
+        `#include <metalnessmap_fragment>
+        metalnessFactor = mix(metalnessFactor, 0.0, lensBehind);`,
+      )
+      .replace(
+        '#include <transmission_fragment>',
+        THREE.ShaderChunk.transmission_fragment.replace(
+          'material.transmission = transmission;',
+          'material.transmission = mix(transmission, 1.0, lensBehind);',
+        ),
+      )
+      .replace(
+        '#include <lights_physical_fragment>',
+        THREE.ShaderChunk.lights_physical_fragment.replace(
+          'material.iridescence = iridescence;',
+          'material.iridescence = iridescence * (1.0 - lensBehind);',
+        ),
       );
   };
   lens.customProgramCacheKey = () => 'ombra-lens';
@@ -232,6 +262,7 @@ export function applyLens(m: Materials, l: LensTint, instant = false) {
     overwrite: 'auto',
   });
   gsap.to(m.lensU.uGrad, { value: l.gradient, duration, ease: EASE, overwrite: 'auto' });
+  gsap.to(m.lensU.uMirror, { value: l.metalness > 0.5 ? 1 : 0, duration, ease: EASE, overwrite: 'auto' });
 }
 
 /**
@@ -300,6 +331,7 @@ export function calibrate(
       }
     }
     m.lensU.uRight.value.copy(right);
+    m.lensU.uFwd.value.set(0, 0, 1).transformDirection(toLocal);
     m.lensU.uMid.value = mid;
     m.lensU.uCL.value.copy(cl.divideScalar(Math.max(nl, 1)));
     m.lensU.uCR.value.copy(cr.divideScalar(Math.max(nr, 1)));
