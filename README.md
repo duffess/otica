@@ -10,9 +10,15 @@ npm run build
 npm run model    # regenera os GLB otimizados a partir de models-src/glasses_08.glb
 ```
 
+Cenas (uma parada de câmera por seção, em `src/scene/keyframes.ts`): 01 abertura, 02 armação
+(close da dobradiça), 03 lentes (por trás da lente, com tabela de exame refratada), 04 leveza
+(desmonta em camadas), 05 configurador, 06 serviço.
+
 - `?modelo=codigo` mostra o óculos modelado em código (placeholder) no lugar do GLB.
-- Celular/toque: modelo leve, sem transmission (lentes e cristal por opacidade), DPR até 1.5, sem pós-processamento.
-- `prefers-reduced-motion`: sem Lenis, sem giro e sem câmera animada; as cenas trocam por corte.
+- `?movimento=reduzido` simula `prefers-reduced-motion`: sem Lenis, sem giro, cenas por corte.
+- Celular/toque: modelo leve (19k tri), sem transmission (lentes e cristal por opacidade), DPR até 1.5,
+  sem pós-processamento (o pedaço de código nem é baixado).
+- Qualidade adaptativa (PerformanceMonitor): se o FPS cai, o DPR baixa e o reflexo e o bloom saem.
 
 ## Modelo 3D
 

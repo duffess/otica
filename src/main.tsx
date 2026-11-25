@@ -8,10 +8,13 @@ import '@fontsource/manrope/latin-600.css';
 import './styles.css';
 import './loadModel'; // começa a baixar o modelo já, com progresso
 import App from './App';
+import { reducedMotion } from './device';
 
 // a página sempre abre na abertura (a câmera depende da posição da rolagem)
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 window.scrollTo(0, 0);
+// o CSS também respeita o parâmetro ?movimento=reduzido
+if (reducedMotion) document.documentElement.classList.add('reduce-motion');
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
