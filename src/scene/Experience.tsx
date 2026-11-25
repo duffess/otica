@@ -7,6 +7,7 @@ import { frameById, lensById } from '../options';
 import { store } from '../store';
 import { applyFrame, applyLens, calibrate, createMaterials, type Materials } from './materials';
 import { BlobShadow } from './BlobShadow';
+import { drag, releaseHoldIfScrolled, useGlassesDrag } from './drag';
 import type { GlassesParts } from './parts';
 import { PlaceholderGlasses } from './PlaceholderGlasses';
 import { RealGlasses } from './RealGlasses';
@@ -27,6 +28,8 @@ function SceneTone() {
   const c = useMemo(() => new THREE.Color(), []);
   useFrame(() => {
     c.lerpColors(STONE, INK, rig.dark);
+    // o rodapé tem fundo grafite próprio (legível sem 3D) e só fica transparente quando a cena já está escura
+    document.documentElement.style.setProperty('--scene-dark', rig.dark.toFixed(3));
     if (scene.background instanceof THREE.Color) scene.background.copy(c);
     if (scene.fog) (scene.fog as THREE.Fog).color.copy(c);
     floorMat.current?.color.copy(c);
@@ -107,6 +110,7 @@ function Glasses({ materials, low }: { materials: Materials; low: boolean }) {
   const mirrorInner = useRef<THREE.Group>(null);
   const shadow = useRef<THREE.Group>(null);
   const [mirror, setMirror] = useState<{ root: THREE.Object3D; pairs: [THREE.Object3D, THREE.Object3D][] } | null>(null);
+  useGlassesDrag(spinner);
 
   const onParts = useCallback(
     (p: GlassesParts) => {
@@ -138,11 +142,24 @@ function Glasses({ materials, low }: { materials: Materials; low: boolean }) {
     const nearest = rig.rotY + TAU * Math.round((angle.current - rig.rotY) / TAU);
     // só em desenvolvimento: window.__snap = true pula direto para o ângulo final (testes com a aba oculta)
     const snap = import.meta.env.DEV && (window as unknown as { __snap?: boolean }).__snap;
+    // giro pela mão da pessoa (arrastar) e a inércia depois de soltar
+    releaseHoldIfScrolled();
+    const userPose = drag.active || drag.hold;
+    angle.current += drag.yaw;
+    drag.yaw = 0;
+    if (!drag.active && drag.vYaw !== 0) {
+      angle.current += drag.vYaw * dt;
+      drag.vYaw *= Math.exp(-3.2 * dt);
+      if (Math.abs(drag.vYaw) < 0.02) drag.vYaw = 0;
+    }
+    if (!userPose) drag.pitch = THREE.MathUtils.damp(drag.pitch, 0, 3, dt);
+
     if (reducedMotion || snap) {
-      angle.current = rig.spin > 0.5 ? 0.35 : nearest;
+      if (!userPose) angle.current = rig.spin > 0.5 ? 0.35 : nearest;
     } else {
-      angle.current += dt * 0.32 * rig.spin;
-      angle.current = THREE.MathUtils.damp(angle.current, nearest, 2.6 * (1 - rig.spin), dt);
+      if (!drag.active) angle.current += dt * 0.32 * rig.spin;
+      // a pose escolhida pela pessoa fica até a página rolar
+      if (!userPose) angle.current = THREE.MathUtils.damp(angle.current, nearest, 2.6 * (1 - rig.spin), dt);
     }
     s.rotation.y = angle.current;
     if (shadow.current) shadow.current.rotation.y = angle.current;
@@ -154,7 +171,7 @@ function Glasses({ materials, low }: { materials: Materials; low: boolean }) {
     const follow = isLite || reducedMotion ? 0 : THREE.MathUtils.clamp(rig.fit / 2.2, 0.15, 1);
     const px = state.pointer.x * follow;
     const py = state.pointer.y * follow;
-    h.rotation.x = THREE.MathUtils.damp(h.rotation.x, -0.04 - py * 0.06, 3, dt);
+    h.rotation.x = THREE.MathUtils.damp(h.rotation.x, -0.04 - py * 0.06 + drag.pitch, drag.active ? 14 : 3, dt);
     h.rotation.z = THREE.MathUtils.damp(h.rotation.z, -px * 0.04, 3, dt);
 
     // 4. leveza: as lentes saem para a frente primeiro, depois as hastes para trás e para fora

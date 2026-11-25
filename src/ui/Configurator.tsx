@@ -2,6 +2,7 @@ import { BRAND } from '../brand';
 import { FRAMES, LENSES, frameById, lensById, type FrameId, type LensId } from '../options';
 import { store, useStore } from '../store';
 import { useReveal } from './useReveal';
+import { isLite } from '../device';
 
 interface Option {
   id: string;
@@ -64,15 +65,15 @@ export function Configurator() {
   const href = `https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(message)}`;
 
   return (
-    <section id="configurador" className="config" data-scene="configurador" aria-labelledby="config-title">
+    <section id="configurador" className="config" data-scene="configurador" data-index="05" data-label="Configurador" aria-labelledby="config-title">
       <div className="config__panel reveal" ref={panel}>
-        <p className="eyebrow">
-          <span className="chapter__num">05</span> Configurador
-        </p>
         <h2 id="config-title" className="config__title">
           Monte o <em>seu</em>.
         </h2>
         <p className="config__intro">Escolha o acabamento e a lente. O óculos muda na hora.</p>
+        <p className="config__drag">
+          <span aria-hidden>↻</span> {isLite ? 'Toque no óculos e arraste para girar.' : 'Arraste o óculos para girar.'}
+        </p>
 
         <Choice
           name="armacao"
