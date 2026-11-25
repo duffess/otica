@@ -14,9 +14,6 @@ export function Service() {
   return (
     <section className="service" data-scene="servico" aria-labelledby="service-title">
       <div className="service__inner reveal" ref={ref}>
-        <p className="eyebrow">
-          <span className="chapter__num">06</span> Serviço
-        </p>
         <h2 id="service-title" className="service__title">
           Cuidado <em>de perto</em>.
         </h2>

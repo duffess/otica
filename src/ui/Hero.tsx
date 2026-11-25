@@ -63,11 +63,11 @@ export function Hero() {
       </header>
 
       <div className="hero__copy" ref={copy}>
-        <p className="eyebrow">{BRAND.kind} · São Paulo</p>
         <h1 id="hero-title" className="hero__title">
           {BRAND.name}
         </h1>
         <p className="hero__lede">{BRAND.tagline}</p>
+        <p className="hero__place">{BRAND.kind} nos Jardins, São Paulo</p>
       </div>
 
       <p className="hero__hint" aria-hidden>

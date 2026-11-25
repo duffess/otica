@@ -19,6 +19,9 @@ Cenas (uma parada de câmera por seção, em `src/scene/keyframes.ts`): 01 abert
 - Celular/toque: modelo leve (19k tri), sem transmission (lentes e cristal por opacidade), DPR até 1.5,
   sem pós-processamento (o pedaço de código nem é baixado).
 - Qualidade adaptativa (PerformanceMonitor): se o FPS cai, o DPR baixa e o reflexo e o bloom saem.
+- Freio na rolagem: se o gesto para no meio de uma troca de cena, a página completa e para na cena (`startSceneSnap` em `src/motion.ts`).
+- Girar o óculos: arrastar com o mouse ou com o dedo em cima dele (`src/scene/drag.ts`); a pose fica até a página rolar.
+- Revisado com o detector do Impeccable: o único aviso que sobra é o fundo pedra, que é pedido do briefing.
 
 ## Modelo 3D
 

@@ -17,12 +17,15 @@ export function Chapter({ scene, number, label, title, children, specs, side }: 
   const copy = useReveal<HTMLDivElement>(0.25);
   const id = `cap-${scene}`;
   return (
-    <section className={`chapter chapter--${side} chapter--${scene}`} data-scene={scene} aria-labelledby={id}>
+    <section
+      className={`chapter chapter--${side} chapter--${scene}`}
+      data-scene={scene}
+      data-index={number}
+      data-label={label}
+      aria-labelledby={id}
+    >
       <div className="chapter__sticky">
         <div className="chapter__copy reveal" ref={copy}>
-          <p className="eyebrow">
-            <span className="chapter__num">{number}</span> {label}
-          </p>
           <h2 id={id} className="chapter__title">
             {title}
           </h2>

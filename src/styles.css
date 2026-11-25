@@ -345,7 +345,9 @@ a {
 .footer {
   position: relative;
   z-index: 1;
-  /* sem fundo: o grafite vem da cena 3D, que escurece aqui */
+  /* grafite próprio, que some conforme a cena 3D escurece por baixo (--scene-dark, 0 a 1):
+     sem WebGL ou no meio da transição, o texto claro continua legível */
+  background: rgb(26 26 26 / calc(1 - var(--scene-dark, 0)));
   color: var(--stone);
   padding: clamp(64px, 12svh, 120px) var(--pad) 40px;
   display: grid;
@@ -785,4 +787,76 @@ a {
 .topbar.is-hidden {
   transform: translateY(-100%);
   opacity: 0;
+}
+
+/* dica de girar o óculos */
+.config__drag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -1.4rem 0 1.8rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.config__drag span {
+  font-size: 1rem;
+  color: var(--tort);
+}
+@media (max-width: 768px) {
+  .config__drag {
+    margin: -10px 0 12px;
+  }
+}
+
+/* ---------- ajustes da revisão do Impeccable ---------- */
+/* destaque nos títulos só pela cor: o itálico de exibição é o padrão de site gerado */
+.chapter__title em,
+.config__title em,
+.service__title em {
+  font-style: normal;
+}
+p {
+  text-wrap: pretty;
+}
+.hero__place {
+  margin: 10px 0 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* índice da cena atual: número e nome, fixo no canto (no lugar das etiquetas acima dos títulos) */
+.scene-index {
+  position: fixed;
+  left: var(--pad);
+  bottom: 28px;
+  z-index: 4;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+}
+.scene-index.is-on {
+  opacity: 1;
+  transform: none;
+}
+.scene-index__num {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  color: var(--tort);
+}
+.scene-index__bar {
+  width: 40px;
+  height: 1px;
+  background: var(--line);
+  align-self: center;
+}
+@media (max-width: 768px) {
+  .scene-index {
+    display: none;
+  }
 }
