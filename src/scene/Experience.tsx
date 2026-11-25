@@ -1,8 +1,6 @@
-import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Environment, Lightformer } from '@react-three/drei';
-import { Bloom, EffectComposer, SMAA, ToneMapping } from '@react-three/postprocessing';
-import { ToneMappingMode } from 'postprocessing';
+import { Environment, Lightformer, PerformanceMonitor } from '@react-three/drei';
 import * as THREE from 'three';
 import { isLite, reducedMotion, usePlaceholder } from '../device';
 import { frameById, lensById } from '../options';
@@ -15,6 +13,8 @@ import { RealGlasses } from './RealGlasses';
 import { EyeChart } from './EyeChart';
 import { FLOAT_Y } from './keyframes';
 import { rig, setupRig } from './rig';
+
+const Effects = lazy(() => import('./Effects'));
 
 const BG = '#EEEBE6';
 const TAU = Math.PI * 2;
@@ -76,7 +76,7 @@ function placeTemple(t: THREE.Object3D, hinge: THREE.Vector3, side: 1 | -1, angl
   t.position.z += dz;
 }
 
-function Glasses({ materials }: { materials: Materials }) {
+function Glasses({ materials, low }: { materials: Materials; low: boolean }) {
   const holder = useRef<THREE.Group>(null);
   const spinner = useRef<THREE.Group>(null);
   const parts = useRef<GlassesParts | null>(null);
@@ -171,7 +171,7 @@ function Glasses({ materials }: { materials: Materials }) {
         </group>
       </group>
       <BlobShadow ref={shadow} />
-      {mirror && (
+      {mirror && !low && (
         <group scale-y={-1}>
           <group ref={mirrorInner} matrixAutoUpdate={false}>
             <primitive object={mirror.root} />
@@ -227,8 +227,22 @@ function Floor() {
 function Scene() {
   const materials = useMemo(() => createMaterials(isLite), []);
   useMaterialSync(materials);
+  // queda de desempenho medida em tempo real: baixa o DPR e tira reflexo e bloom
+  const [low, setLow] = useState(false);
+  const setDpr = useThree((s) => s.setDpr);
   return (
     <>
+      <PerformanceMonitor
+        flipflops={2}
+        onDecline={() => {
+          setLow(true);
+          setDpr(isLite ? 1 : 1.25);
+        }}
+        onFallback={() => {
+          setLow(true);
+          setDpr(1);
+        }}
+      />
       <color attach="background" args={[BG]} />
       <fog attach="fog" args={[BG, 5, 13]} />
       <Studio />
@@ -237,16 +251,14 @@ function Scene() {
         <EyeChart />
       </Suspense>
       <Suspense fallback={null}>
-        <Glasses materials={materials} />
+        <Glasses materials={materials} low={low} />
         <ReadySignal />
       </Suspense>
       <Floor />
       {!isLite && (
-        <EffectComposer multisampling={0}>
-          <Bloom mipmapBlur luminanceThreshold={0.92} luminanceSmoothing={0.1} intensity={0.22} radius={0.6} />
-          <ToneMapping mode={ToneMappingMode.NEUTRAL} />
-          <SMAA />
-        </EffectComposer>
+        <Suspense fallback={null}>
+          <Effects low={low} />
+        </Suspense>
       )}
     </>
   );

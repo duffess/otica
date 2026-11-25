@@ -1,5 +1,7 @@
-import { forwardRef, useMemo } from 'react';
+import { forwardRef, useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { rig } from './rig';
 
 /**
  * Sombra de contato pintada: duas manchas suaves (frente mais escura, hastes mais leves)
@@ -23,20 +25,28 @@ function blobTexture() {
 
 export const BlobShadow = forwardRef<THREE.Group>(function BlobShadow(_, ref) {
   const map = useMemo(blobTexture, []);
-  const mat = (opacity: number) => (
-    <meshBasicMaterial map={map} transparent opacity={opacity} depthWrite={false} fog={false} toneMapped={false} />
+  const front = useRef<THREE.MeshBasicMaterial>(null);
+  const back = useRef<THREE.MeshBasicMaterial>(null);
+  // nos closes (dobradiça, lente) a sombra vista de perto vira uma mancha: some aos poucos
+  useFrame(() => {
+    const k = THREE.MathUtils.smoothstep(rig.fit, 0.7, 2);
+    if (front.current) front.current.opacity = 0.34 * k;
+    if (back.current) back.current.opacity = 0.12 * k;
+  });
+  const mat = (ref: React.RefObject<THREE.MeshBasicMaterial | null>, opacity: number) => (
+    <meshBasicMaterial ref={ref} map={map} transparent opacity={opacity} depthWrite={false} fog={false} toneMapped={false} />
   );
   return (
     <group ref={ref} position-y={0.003}>
       {/* frente: aros e ponte */}
       <mesh rotation-x={-Math.PI / 2} position-z={0.62} scale={[1.75, 0.42, 1]} renderOrder={1}>
         <planeGeometry />
-        {mat(0.34)}
+        {mat(front, 0.34)}
       </mesh>
       {/* hastes */}
       <mesh rotation-x={-Math.PI / 2} position-z={-0.1} scale={[1.7, 1.9, 1]} renderOrder={1}>
         <planeGeometry />
-        {mat(0.12)}
+        {mat(back, 0.12)}
       </mesh>
     </group>
   );
