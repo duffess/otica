@@ -623,3 +623,138 @@ a {
     width: calc(100% + 2 * var(--pad));
   }
 }
+
+/* ---------- 6. serviço ---------- */
+.service {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  align-items: flex-end;
+  padding: 120px var(--pad) 72px;
+}
+.service__inner {
+  width: 100%;
+}
+.service__title {
+  margin: 0 0 clamp(40px, 7svh, 80px);
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(2.8rem, 6vw, 6rem);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  max-width: 10ch;
+}
+.service__title em {
+  color: var(--tort);
+}
+.service__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(24px, 4vw, 64px);
+}
+.service__list li {
+  border-top: 1px solid var(--ink);
+  padding-top: 18px;
+}
+.service__idx {
+  font-family: var(--serif);
+  color: var(--tort);
+}
+.service__list h3 {
+  margin: 10px 0 10px;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.5rem, 2.2vw, 2rem);
+}
+.service__list p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 34ch;
+}
+.service__visit {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: end;
+  gap: 24px 48px;
+  margin-top: clamp(48px, 8svh, 96px);
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.service__visit address,
+.service__visit p {
+  margin: 0;
+  font-style: normal;
+  font-family: var(--serif);
+  font-size: 1.2rem;
+  line-height: 1.4;
+}
+.service__label {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.service__note {
+  margin: 20px 0 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+@media (max-width: 768px) {
+  .service {
+    /* o óculos gira no terço de cima; o conteúdo vem por cima de um fundo pedra */
+    padding: 38svh 0 0;
+  }
+  .service__inner {
+    background: var(--stone);
+    padding: 28px var(--pad) 48px;
+  }
+  .service__list {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .service__visit {
+    grid-template-columns: 1fr;
+  }
+  .service__visit .btn {
+    width: 100%;
+  }
+}
+
+/* link de pular (aparece só com o foco do teclado) */
+.skip {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  padding: 12px 18px;
+  background: var(--ink);
+  color: var(--stone);
+  text-decoration: none;
+  border-radius: 999px;
+  transform: translateY(-160%);
+  transition: transform 0.3s var(--ease);
+}
+.skip:focus-visible {
+  transform: none;
+  outline-color: var(--champ);
+}
+
+/* mesmo efeito do prefers-reduced-motion, ligado por ?movimento=reduzido */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation: none !important;
+  transition-duration: 0.01ms !important;
+}
+.reduce-motion .reveal {
+  transform: none;
+}

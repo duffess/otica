@@ -7,6 +7,7 @@ import { Configurator } from './ui/Configurator';
 import { Footer } from './ui/Footer';
 import { Hero } from './ui/Hero';
 import { Loader } from './ui/Loader';
+import { Service } from './ui/Service';
 
 // three/fiber/drei chegam num pedaço separado, depois da tela de abertura
 const Experience = lazy(() => import('./scene/Experience'));
@@ -35,10 +36,14 @@ export default function App() {
         </Suspense>
       </div>
 
+      <a className="skip" href="#configurador">
+        Pular para o configurador
+      </a>
       <main className="page">
         <Hero />
         <Chapters />
         <Configurator />
+        <Service />
       </main>
       <Footer />
       <Loader />

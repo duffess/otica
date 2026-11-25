@@ -58,18 +58,22 @@ const desktop: KF = {
   lentes: { ...base, pos: add(lens, [0.05, 0.24, -0.92]), target: lens, fit: 0.2, screen: [0.2, 0], rotY: 0, chart: 1, flex: 1 },
   leveza: { ...base, pos: [-1.35, O + 0.95, 2.5], target: [0, O, 0.05], fit: 3.8, screen: [0.2, 0.03], rotY: ROT_LIGHT, explode: 1 },
   configurador: { ...base, pos: [-0.3, O + 0.22, 3.1], target: [0, O, 0], fit: 4.4, screen: [-0.21, 0.03], rotY: -0.42 },
+  // 6. serviço: de volta ao giro lento da abertura, pequeno no canto de cima
+  servico: { ...base, pos: [0, O + 0.55, 3.6], target: [0, O, 0], fit: 6.2, screen: [0.27, 0.2], spin: 1, rotY: 0 },
 };
-desktop.rodape = desktop.configurador;
+desktop.rodape = desktop.servico;
 
 const mobile: KF = {
   abertura: { ...base, pos: [0, O + 0.34, 4.2], target: [0, O, 0], fit: 1.9, screen: [0, 0.1], spin: 1, rotY: 0 },
   armacao: { ...base, pos: add(hinge, [0.55, 0.2, 0.6]), target: hinge, fit: 0.55, screen: [0, 0.2], rotY: ROT_HINGE },
   lentes: { ...base, pos: add(lens, [0.02, 0.03, -1.0]), target: lens, fit: 0.62, screen: [0, 0.18], rotY: 0, chart: 1, flex: 1 },
-  leveza: { ...base, pos: [-1.2, O + 1.0, 2.6], target: [-0.08, O, 0.05], fit: 2.05, screen: [0, 0.22], rotY: ROT_LIGHT, explode: 1 },
+  // mais longe que no computador: com a câmera perto, a haste mais próxima fica enorme e sai do quadro
+  leveza: { ...base, pos: [-1.8, O + 1.45, 3.8], target: [-0.12, O, 0.05], fit: 2.5, screen: [0, 0.22], rotY: ROT_LIGHT, explode: 1 },
   // óculos no terço de cima da tela, painel embaixo
   configurador: { ...base, pos: [-0.2, O + 0.3, 3.6], target: [0, O, 0], fit: 2.0, screen: [0, 0.26], rotY: -0.42 },
+  servico: { ...base, pos: [0, O + 0.5, 4.2], target: [0, O, 0], fit: 2.6, screen: [0, 0.33], spin: 1, rotY: 0 },
 };
-mobile.rodape = mobile.configurador;
+mobile.rodape = mobile.servico;
 
 export const FLOAT_Y = O;
 export const getKeyframes = (narrow: boolean) => (narrow ? mobile : desktop);
